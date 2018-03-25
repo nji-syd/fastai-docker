@@ -52,7 +52,7 @@ nvidia-docker run --rm -d --name fastai -p 8888:8888 -v /home:/home fastai
 
 ##### Attach with Command Line Access (if required)
 ```sh
-docker exec -it fastai-gpu bash
+docker exec -it fastai bash
 ```
 ##### Jupyter Notebook
 ```sh
