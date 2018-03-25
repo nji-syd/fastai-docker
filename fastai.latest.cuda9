@@ -1,0 +1,133 @@
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+
+#################################################################################################################
+#           Global
+#################################################################################################################
+# apt-get to skip any interactive post-install configuration steps with DEBIAN_FRONTEND=noninteractive and apt-get install -y
+
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ARG DEBIAN_FRONTEND=noninteractive
+
+#################################################################################################################
+#           Global Path Setting
+#################################################################################################################
+
+ENV CUDA_HOME /usr/local/cuda
+ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${CUDA_HOME}/lib64
+ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/local/lib
+
+ENV OPENCL_LIBRARIES /usr/local/cuda/lib64
+ENV OPENCL_INCLUDE_DIR /usr/local/cuda/include
+
+#################################################################################################################
+#           TINI
+#################################################################################################################
+
+# Install tini
+ENV TINI_VERSION v0.14.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+#################################################################################################################
+#           SYSTEM
+#################################################################################################################
+# update: downloads the package lists from the repositories and "updates" them to get information on the newest versions of packages and their 
+# dependencies. It will do this for all repositories and PPAs. 
+# upgrade: upgrade is used to install the newest versions of all packages currently installed on the system from the sources enumerated in /etc/apt/sources.list. Packages currently installed with new
+#   versions available are retrieved and upgraded; under no circumstances are currently installed packages removed, or packages not already installed retrieved and installed. New versions of
+#   currently installed packages that cannot be upgraded without changing the install status of another package will be left at their current version. An update must be performed first so that apt-get 
+#   knows that new versions of packages are available.
+# dist-upgrade: dist-upgrade in addition to performing the function of upgrade, also intelligently handles changing dependencies with new versions of packages; apt-get has a "smart" conflict resolution 
+#   system, and it will attempt to upgrade the most important packages at the expense of less important ones if necessary. So, dist-upgrade command may remove some packages. The /etc/apt/sources.list file
+#   contains a list of locations from which to retrieve desired package files. See also apt_preferences for a mechanism for overriding the general settings for individual packages.
+# full-upgrade: full-upgrade performs the function of upgrade but may also remove installed packages if that is required in order to resolve a package conflict.
+# ---------------------------------------------------------------------------------------------------------------
+
+RUN apt-get update --fix-missing && apt-get install -y \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    wget \
+    vim \
+    git \
+    unzip
+        
+#################################################################################################################
+#           CONDA
+#################################################################################################################
+
+# add conda to path
+ARG CONDA_DIR=/opt/conda
+ENV PATH $CONDA_DIR/bin:$PATH
+
+# Install miniconda
+ENV PYTHON_VERSION=3.6
+RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh  && \
+     chmod +x ~/miniconda.sh && \
+     ~/miniconda.sh -b -p /opt/conda && \
+     rm ~/miniconda.sh && \
+    /opt/conda/bin/conda install conda-build
+    
+# Add the following channels to the bottom of the channel queue (lowest priority)
+# conda-forge... for pymc3,dipy,textblob,imageio,ipyvolume
+RUN conda config --append channels conda-forge/label/rc
+RUN conda config --append channels conda-forge
+
+#################################################################################################################
+#           FASTAI
+#################################################################################################################
+# clone fastai repo
+RUN git clone https://github.com/fastai/fastai.git /usr/local/fastai
+
+# install fastai environment
+RUN cd /usr/local/fastai && conda env update -f environment.yml 
+    
+# Solves: libjpeg.so.8: cannot open shared object file: No such file or directory
+RUN /bin/bash -c "source activate fastai && conda update pillow"
+
+#################################################################################################################
+#           System CleanUp
+#################################################################################################################
+# apt-get autoremove: used to remove packages that were automatically installed to satisfy dependencies for some 
+# package and that are no more needed. 
+# apt-get clean: removes the aptitude cache in /var/cache/apt/archives. The only drawback is that the packages 
+# have to be downloaded again if you reinstall them.
+
+RUN apt-get autoremove -y && apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    conda clean -i -l -t -y
+
+#################################################################################################################
+#           JUPYTER 
+#################################################################################################################
+# if your system has multiple GPUs, this docker file shows how you can point notebook servers to each device
+# using CUDA_DEVICE_ORDER and CUDA_VISIBLE_DEVICES https://github.com/MattKleinsmith/dockerfiles/blob/master/fastai/Dockerfile
+
+# Add a notebook profile.
+RUN mkdir -p -m 700 /root/.jupyter/ && \
+    echo "c.NotebookApp.ip = '*'" >> /root/.jupyter/jupyter_notebook_config.py
+
+RUN /bin/bash -c "source activate fastai && jupyter nbextension enable --py widgetsnbextension --sys-prefix"
+RUN /bin/bash -c "source activate fastai && jupyter contrib nbextension install"
+
+# IPython
+EXPOSE 8888
+
+#################################################################################################################
+#           START UP
+#################################################################################################################
+
+VOLUME /home
+WORKDIR /home
+
+ENTRYPOINT [ "/tini", "--" ]
+
+# start jupyter server specifying password: fastai
+# in jupyter notebook run the following to generate custom password key and update --NotebookApp.password=
+# from notebook.auth import passwd; passwd()
+
+#CMD /bin/bash -c "source activate fastai && CUDA_VISIBLE_DEVICES=0 jupyter notebook --allow-root --no-browser --NotebookApp.password='sha1:a60ff295d0b9:506732d050d4f50bfac9b6d6f37ea6b86348f4ed'"
+CMD /bin/bash -c "source activate fastai && jupyter notebook --allow-root --no-browser --NotebookApp.password='sha1:a60ff295d0b9:506732d050d4f50bfac9b6d6f37ea6b86348f4ed'"
+
+
