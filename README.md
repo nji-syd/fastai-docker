@@ -1,4 +1,4 @@
-# Dockerfiles for the fast.ai library supporting GPU
+# Docker files for the fast.ai library supporting GPU
 The Docker files download the fast.ai repo and build the Python environment as defined in the environment.yml file provided by fastai. 
 The files build upon nvidia/cuda images. 
 
@@ -6,7 +6,7 @@ Running the container starts a jupyter notebook at localhost:8888
 
 jupyter password: fastai
 
-### Comtents
+### Contents
 
 The repo contains two docker files 
 
@@ -58,4 +58,5 @@ docker exec -it fastai bash
 ```sh
 localhost:8888
 ```
-
+### Quickstart
+Further details can be found in the blog post [here](https://nji-syd.github.io/2018/03/26/up-and-running-with-fast-ai-and-docker/)
