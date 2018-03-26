@@ -58,5 +58,5 @@ docker exec -it fastai bash
 ```sh
 localhost:8888
 ```
-### Quickstart
+### Blog
 Further details can be found in the blog post [here](https://nji-syd.github.io/2018/03/26/up-and-running-with-fast-ai-and-docker/)
