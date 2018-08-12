@@ -60,3 +60,10 @@ localhost:8888
 ```
 ### Blog
 Further details can be found in the blog post [here](https://nji-syd.github.io/2018/03/26/up-and-running-with-fast-ai-and-docker/)
+
+##### PyTorch no longer supports this GPU because it is too old.
+For GPUs with CUDA compatability equal to 3, install pytorch from source to solve this issue. See the file section:
+
+uncomment to fix error: PyTorch no longer supports this GPU because it is too old.
+
+further details [here](http://forums.fast.ai/t/pytorch-not-working-with-an-old-nvidia-card/14632/2)

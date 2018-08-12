@@ -9,17 +9,6 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ARG DEBIAN_FRONTEND=noninteractive
 
 #################################################################################################################
-#           Global Path Setting
-#################################################################################################################
-
-ENV CUDA_HOME /usr/local/cuda
-ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${CUDA_HOME}/lib64
-ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/local/lib
-
-ENV OPENCL_LIBRARIES /usr/local/cuda/lib64
-ENV OPENCL_INCLUDE_DIR /usr/local/cuda/include
-
-#################################################################################################################
 #           TINI
 #################################################################################################################
 
@@ -85,6 +74,21 @@ RUN cd /usr/local/fastai && conda env update -f environment.yml
     
 # Solves: libjpeg.so.8: cannot open shared object file: No such file or directory
 RUN /bin/bash -c "source activate fastai && conda update pillow"
+RUN /bin/bash -c "source activate fastai && pip install --upgrade pip"
+
+#################################################################################################################
+# uncomment to fix error: PyTorch no longer supports this GPU because it is too old. 
+# fix by installing pytorch from source, https://discuss.pytorch.org/t/pytorch-no-longer-supports-this-gpu-because-it-is-too-old/13803/5
+# http://forums.fast.ai/t/pytorch-not-working-with-an-old-nvidia-card/14632/2
+# alternatively rollback to pytorch=0.3.0
+#RUN /bin/bash -c "source activate fastai && conda uninstall -y pytorch"
+#RUN /bin/bash -c "source activate fastai && conda install -y mkl-include cmake"
+#RUN /bin/bash -c "source activate fastai && git clone --recursive https://github.com/pytorch/pytorch /usr/local/pytorch && \
+#    cd /usr/local/pytorch && \
+#    git checkout v0.3.1 && \
+#    git submodule update --init && \
+#    python setup.py install"
+#################################################################################################################
 
 #################################################################################################################
 #           System CleanUp
