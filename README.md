@@ -17,7 +17,15 @@ jupyter password: fastai
 2. Choose Change Kernel -> env:fastai. 
 3. Save the Notebook and fastai becomes the default environment for that notebook.
 
-*These files are provided as is and have not been extensively tested. If you find a problem please message me or create a pull request.*
+**Set the default working directory for Jupyter Notebook:**
+
+Edit the dockerfile to set the default working directory for Jupyter. Edit \<path-to-directory> in the line shown below.
+
+```
+RUN echo "c.NotebookApp.notebook_dir = '/<path-to-directory>'" >> /root/.jupyter/jupyter_notebook_config.py
+```
+
+*These files are provided as is and have not been extensively tested. If you find a problem please raise an issue or create a pull request.*
 
 ### Legacy Files (Don't Use)
 
@@ -73,7 +81,7 @@ localhost:8888
 Further details can be found in the blog post [here](https://nji-syd.github.io/2018/03/26/up-and-running-with-fast-ai-and-docker/)
 
 ### PyTorch no longer supports this GPU because it is too old.
-For GPUs with CUDA compatability equal to 3, install pytorch from source to solve this issue. See the file section:
+For GPUs with CUDA compatibility equal to 3, install pytorch from source to solve this issue. See the file section:
 
 uncomment to fix error: PyTorch no longer supports this GPU because it is too old.
 

@@ -66,31 +66,13 @@ RUN conda config --append channels conda-forge
 #################################################################################################################
 #           FASTAI
 #################################################################################################################
-#RUN git clone https://github.com/fastai/fastai.git /usr/local/fastai
-#RUN cd /usr/local/fastai && conda env update -f environment.yml 
 
 RUN conda create -n fastai python=3.6  
 
 RUN /bin/bash -c "source activate fastai && pip install --upgrade pip"
 RUN /bin/bash -c "source activate fastai && pip install fastai==0.7.0"
 RUN /bin/bash -c "source activate fastai && pip install torch==0.4.1 torchvision==0.2.1"
-
-# Solves: libjpeg.so.8: cannot open shared object file: No such file or directory
-#RUN /bin/bash -c "source activate fastai && conda update pillow"
-
-#################################################################################################################
-# uncomment to fix error: PyTorch no longer supports this GPU because it is too old. 
-# fix by installing pytorch from source, https://discuss.pytorch.org/t/pytorch-no-longer-supports-this-gpu-because-it-is-too-old/13803/5
-# http://forums.fast.ai/t/pytorch-not-working-with-an-old-nvidia-card/14632/2
-# alternatively rollback to pytorch=0.3.0
-#RUN /bin/bash -c "source activate fastai && conda uninstall -y pytorch"
-#RUN /bin/bash -c "source activate fastai && conda install -y mkl-include cmake"
-#RUN /bin/bash -c "source activate fastai && git clone --recursive https://github.com/pytorch/pytorch /usr/local/pytorch && \
-#    cd /usr/local/pytorch && \
-#    git checkout v0.3.1 && \
-#    git submodule update --init && \
-#    python setup.py install"
-#################################################################################################################
+RUN /bin/bash -c "source activate fastai && pip install pillow==4.2.1 spacy scikit-image dill"
 
 #################################################################################################################
 #           JUPYTER 
@@ -109,8 +91,8 @@ RUN mkdir -p -m 700 /root/.jupyter/ && \
     echo "c.NotebookApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_notebook_config.py
 
 # set default working directory to Jupyter Notebook
-#RUN echo "c.NotebookApp.notebook_dir = '/home'" >> /root/.jupyter/jupyter_notebook_config.py
-RUN echo "c.NotebookApp.notebook_dir = '/workspace'" >> /root/.jupyter/jupyter_notebook_config.py
+RUN echo "c.NotebookApp.notebook_dir = '/'" >> /root/.jupyter/jupyter_notebook_config.py
+#RUN echo "c.NotebookApp.notebook_dir = '/workspace'" >> /root/.jupyter/jupyter_notebook_config.py
 
 # IPython
 EXPOSE 8888

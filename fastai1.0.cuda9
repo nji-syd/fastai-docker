@@ -46,8 +46,7 @@ RUN apt-get update --fix-missing && apt-get install -y \
     pluma \
     vim \
     git \
-    unzip \
-    python3-pip
+    unzip
 
 #################################################################################################################
 #           CONDA
@@ -70,7 +69,7 @@ RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86
 RUN conda config --append channels fastai --append channels pytorch --append channels conda-forge
 
 #################################################################################################################
-#           FASTAI VERSION 1.X
+#           FASTAI VERSION 1.0
 #################################################################################################################
 
 # create fastai environment
@@ -102,7 +101,7 @@ RUN mkdir -p -m 700 /root/.jupyter/ && \
     echo "c.NotebookApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_notebook_config.py
 
 # set default working directory for Jupyter Notebook 
-RUN echo "c.NotebookApp.notebook_dir = '/home'" >> /root/.jupyter/jupyter_notebook_config.py
+RUN echo "c.NotebookApp.notebook_dir = '/'" >> /root/.jupyter/jupyter_notebook_config.py
 #RUN echo "c.NotebookApp.notebook_dir = '/workspace'" >> /root/.jupyter/jupyter_notebook_config.py
 
 # IPython
