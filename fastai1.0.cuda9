@@ -86,6 +86,13 @@ RUN /bin/bash -c "source activate fastai && pip install -e git+https://github.co
 
 #################################################################################################################
 #           JUPYTER 
+#
+# To connect a notebook to the Anaconda fastai environment, open the notebook:
+#
+# Select the Kernel menu
+# Choose Change Kernel -> env:fastai.
+# Save the Notebook and fastai becomes the default environment for that notebook.
+#
 # Notes
 # * nb_conda_kernels to automatically detect conda environments 
 #   (https://stackoverflow.com/questions/39604271/conda-environments-not-showing-up-in-jupyter-notebook)
