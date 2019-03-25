@@ -1,17 +1,28 @@
 # Docker files for the fast.ai library supporting GPU
-The Docker files download the fast.ai repo and build the Python environment as defined in the environment.yml file provided by fastai. 
-The files build upon nvidia/cuda images. 
 
+### Update March 2019
+
+Docker files have been updated for FastAI version 1.0
+
+ 1. fastai0.7.cuda9
+ 2. fastai1.0.cuda9
+ 
 Running the container starts a jupyter notebook at localhost:8888
 
 jupyter password: fastai
 
-### Contents
+**Important:** To connect a notebook to the Anaconda fastai environment, open the notebook:
 
-The repo contains two docker files 
+1. Select the Kernel menu 
+2. Choose Change Kernel -> env:fastai. 
+3. Save the Notebook and fastai becomes the default environment for that notebook.
 
- 1. fastai.latest.cuda8
- 2. fastai.latest.cuda9
+*These files are provided as is and have not been extensively tested. If you find a problem please message me or create a pull request.*
+
+### Legacy Files (Don't Use)
+
+ 1. fastai.cuda8.old
+ 2. fastai.cuda9.old
 
 The docker files support nvidia-docker for versions 8 and 9 of cuda respectively. There are two differences between the files:
 
@@ -43,7 +54,7 @@ mkdir docker
 cd docker
 git clone https://github.com/nji-syd/fastai-docker
 cd fastai-docker
-docker build -f fastai.latest.cuda9 -t fastai .
+docker build -f fastai1.0.cuda9 -t fastai .
 ```
 ##### Run Image
 ```sh
