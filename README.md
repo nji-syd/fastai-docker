@@ -25,8 +25,6 @@ Edit the dockerfile to set the default working directory for Jupyter. Edit \<pat
 RUN echo "c.NotebookApp.notebook_dir = '/<path-to-directory>'" >> /root/.jupyter/jupyter_notebook_config.py
 ```
 
-*These files are provided as is and have not been extensively tested. If you find a problem please raise an issue or create a pull request.*
-
 ### Legacy Files (Don't Use)
 
  1. fastai.cuda8.old
