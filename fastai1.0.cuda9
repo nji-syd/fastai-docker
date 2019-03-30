@@ -104,6 +104,8 @@ RUN conda install -n fastai \
 # Notes
 # * multiple GPUs, you can point notebook servers to each device using CUDA_DEVICE_ORDER and CUDA_VISIBLE_DEVICES 
 #   (see https://github.com/MattKleinsmith/dockerfiles/blob/master/fastai/Dockerfile)
+# * notebook password is set to fastai below
+# * set the default working directory with c.NotebookApp.notebook_dir = 
 #################################################################################################################
 
 # Add a notebook profile.
@@ -135,5 +137,6 @@ WORKDIR /home
 
 ENTRYPOINT [ "/tini", "--" ]
 
+# notebook password: fastai
 CMD /bin/bash -c "source activate fastai && jupyter notebook --ip='0.0.0.0' --allow-root --no-browser --NotebookApp.password='sha1:a60ff295d0b9:506732d050d4f50bfac9b6d6f37ea6b86348f4ed'"
 
