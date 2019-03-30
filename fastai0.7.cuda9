@@ -1,47 +1,52 @@
+#################################################################################################################
+# A docker environment for FASTAI v0.7
+# References:
+# https://github.com/Paperspace/fastai-docker/blob/master/fastai-v2/Dockerfile
+#################################################################################################################
+
 FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 
 #################################################################################################################
 #           Global
 #################################################################################################################
-# apt-get to skip any interactive post-install configuration steps with DEBIAN_FRONTEND=noninteractive and apt-get install -y
 
-ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
-ARG DEBIAN_FRONTEND=noninteractive
+ENV LANG C.UTF-8
 
 #################################################################################################################
 #           TINI
 #################################################################################################################
 
-# Install tini
-ENV TINI_VERSION v0.14.0
+ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
 #################################################################################################################
 #           SYSTEM
 #################################################################################################################
-# update: downloads the package lists from the repositories and "updates" them to get information on the newest versions of packages and their 
-# dependencies. It will do this for all repositories and PPAs. 
-# upgrade: upgrade is used to install the newest versions of all packages currently installed on the system from the sources enumerated in /etc/apt/sources.list. Packages currently installed with new
-#   versions available are retrieved and upgraded; under no circumstances are currently installed packages removed, or packages not already installed retrieved and installed. New versions of
-#   currently installed packages that cannot be upgraded without changing the install status of another package will be left at their current version. An update must be performed first so that apt-get 
-#   knows that new versions of packages are available.
-# dist-upgrade: dist-upgrade in addition to performing the function of upgrade, also intelligently handles changing dependencies with new versions of packages; apt-get has a "smart" conflict resolution 
-#   system, and it will attempt to upgrade the most important packages at the expense of less important ones if necessary. So, dist-upgrade command may remove some packages. The /etc/apt/sources.list file
-#   contains a list of locations from which to retrieve desired package files. See also apt_preferences for a mechanism for overriding the general settings for individual packages.
-# full-upgrade: full-upgrade performs the function of upgrade but may also remove installed packages if that is required in order to resolve a package conflict.
-# ---------------------------------------------------------------------------------------------------------------
+# label that nvidia-docker will detect and then mount the driver files (https://github.com/NVIDIA/nvidia-docker/issues/410)
+LABEL com.nvidia.volumes.needed="nvidia_driver"
 
-RUN apt-get update --fix-missing && apt-get install -y \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    wget \
-    vim \
-    git \
-    unzip
-        
+# compute cuda repo for ubuntu1804
+RUN echo "deb http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list
+
+RUN apt-get update && apt-get install -y --no-install-recommends --allow-downgrades --allow-change-held-packages \
+         build-essential \
+         cmake \
+         git \
+         wget \
+         vim \
+         ca-certificates \
+         libnccl2=2.2.13-1+cuda9.0 \
+         libnccl-dev=2.2.13-1+cuda9.0 \
+         python-qt4 \
+         libjpeg-dev \
+         zip \
+         unzip \
+         bzip2 \
+         libpng-dev 
+
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64        
+
 #################################################################################################################
 #           CONDA
 #################################################################################################################
@@ -58,50 +63,43 @@ RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86
      rm ~/miniconda.sh && \
     /opt/conda/bin/conda install conda-build
     
-# Add the following channels to the bottom of the channel queue (lowest priority)
-# conda-forge... for pymc3,dipy,textblob,imageio,ipyvolume
-RUN conda config --append channels conda-forge/label/rc
+# Add the following channels to the bottom of the channel queue
 RUN conda config --append channels conda-forge
 
 #################################################################################################################
 #           FASTAI
 #################################################################################################################
 
-RUN conda create -n fastai python=3.6  
+# clone fastai repo
+RUN git clone --single-branch --branch v0.7.1 https://github.com/fastai/fastai.git /usr/local/fastai
 
-RUN /bin/bash -c "source activate fastai && pip install --upgrade pip"
-RUN /bin/bash -c "source activate fastai && pip install fastai==0.7.0"
-RUN /bin/bash -c "source activate fastai && pip install torch==0.4.1 torchvision==0.2.1"
-RUN /bin/bash -c "source activate fastai && pip install pillow==4.2.1 spacy scikit-image dill"
+# pin torchtext version (see https://forums.fast.ai/t/google-colab-attributeerror-module-torch-has-no-attribute-float32/25327)
+RUN sed -i -e 's/torchtext/torchtext==0.2.3/' /usr/local/fastai/environment.yml
+
+# install fastai environment
+RUN cd /usr/local/fastai && conda env update -f environment.yml 
+
+#################################################################################################################
+#           OTHER PACKAGES
+#################################################################################################################
+
+RUN conda install -n fastai \
+            scikit-learn \
+            bcolz
 
 #################################################################################################################
 #           JUPYTER 
-#
-# To connect a notebook to the Anaconda fastai environment, open the notebook:
-#
-# Select the Kernel menu
-# Choose Change Kernel -> env:fastai.
-# Save the Notebook and fastai becomes the default environment for that notebook.
-#
 # Notes
-# * nb_conda_kernels to automatically detect conda environments 
-#   (https://stackoverflow.com/questions/39604271/conda-environments-not-showing-up-in-jupyter-notebook)
 # * multiple GPUs, you can point notebook servers to each device using CUDA_DEVICE_ORDER and CUDA_VISIBLE_DEVICES 
 #   (see https://github.com/MattKleinsmith/dockerfiles/blob/master/fastai/Dockerfile)
 #################################################################################################################
 
-RUN conda install nb_conda_kernels ipykernel jupyter notebook
-RUN conda install -n fastai ipykernel 
-
 # Add a notebook profile.
+# 1. set default working directory
 RUN mkdir -p -m 700 /root/.jupyter/ && \
-    echo "c.NotebookApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_notebook_config.py
+    echo "c.NotebookApp.notebook_dir = '/'" >> /root/.jupyter/jupyter_notebook_config.py
 
-# set default working directory to Jupyter Notebook
-RUN echo "c.NotebookApp.notebook_dir = '/'" >> /root/.jupyter/jupyter_notebook_config.py
-#RUN echo "c.NotebookApp.notebook_dir = '/workspace'" >> /root/.jupyter/jupyter_notebook_config.py
-
-# IPython
+# Open port
 EXPOSE 8888
 
 #################################################################################################################
@@ -125,10 +123,5 @@ WORKDIR /home
 
 ENTRYPOINT [ "/tini", "--" ]
 
-# start jupyter server specifying password: fastai
-# in jupyter notebook run the following to generate custom password key and update --NotebookApp.password=
-# from notebook.auth import passwd; passwd()
-
-#CMD /bin/bash -c "source activate fastai && CUDA_VISIBLE_DEVICES=0 jupyter notebook --allow-root --no-browser --NotebookApp.password='sha1:a60ff295d0b9:506732d050d4f50bfac9b6d6f37ea6b86348f4ed'"
-CMD /bin/bash -c "jupyter notebook --allow-root --no-browser --NotebookApp.password='sha1:a60ff295d0b9:506732d050d4f50bfac9b6d6f37ea6b86348f4ed'"
+CMD /bin/bash -c "source activate fastai && jupyter notebook --ip='0.0.0.0' --allow-root --no-browser --NotebookApp.password='sha1:a60ff295d0b9:506732d050d4f50bfac9b6d6f37ea6b86348f4ed'"
 

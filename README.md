@@ -11,12 +11,6 @@ Running the container starts a jupyter notebook at localhost:8888
 
 jupyter password: fastai
 
-**Important:** To connect a notebook to the Anaconda fastai environment, open the notebook:
-
-1. Select the Kernel menu 
-2. Choose Change Kernel -> env:fastai. 
-3. Save the Notebook and fastai becomes the default environment for that notebook.
-
 **Set the default working directory for Jupyter Notebook:**
 
 Edit the dockerfile to set the default working directory for Jupyter. Edit \<path-to-directory> in the line shown below.
@@ -25,7 +19,7 @@ Edit the dockerfile to set the default working directory for Jupyter. Edit \<pat
 RUN echo "c.NotebookApp.notebook_dir = '/<path-to-directory>'" >> /root/.jupyter/jupyter_notebook_config.py
 ```
 
-### Legacy Files (Don't Use)
+### Legacy Files
 
  1. fastai.cuda8.old
  2. fastai.cuda9.old
