@@ -53,42 +53,40 @@ ARG CONDA_DIR=/opt/conda
 ENV PATH $CONDA_DIR/bin:$PATH
 
 # Install miniconda
-ENV PYTHON_VERSION=3.6
-RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh  && \
+ENV PYTHON_VERSION=3.7
+# miniconda jan-2019 defaults to python 3.7
+RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-4.5.12-Linux-x86_64.sh -O ~/miniconda.sh  && \
      chmod +x ~/miniconda.sh && \
      ~/miniconda.sh -b -p /opt/conda && \
      rm ~/miniconda.sh && \
     /opt/conda/bin/conda install conda-build
-    
+        
 # Add the following channels to the bottom of the channel queue
 RUN conda config --append channels conda-forge
+
 
 #################################################################################################################
 #           FASTAI ENV
 #################################################################################################################
 
-# create fastai environment
-RUN conda create -n fastai python=3.6  
+# update fastai version as required
+ARG FASTAI_VERSION=1.0.50
+RUN git clone --single-branch --branch $FASTAI_VERSION https://github.com/fastai/fastai.git /usr/local/fastai
 
-# unpin/update fastai version as required
+# set pytorch cuda package to match image cuda version.
+RUN sed -i -e 's/cuda90/cuda92/' /usr/local/fastai/environment.yml
+# set cudatoolkit package to match image cuda version.
+RUN sed -i -e '/dependencies:/a - cudatoolkit==9.2' /usr/local/fastai/environment.yml
+
+# install fastai environment
+RUN cd /usr/local/fastai && conda env update -f environment.yml     
+
 RUN conda install -n fastai -c fastai -c pytorch \
-            fastai==1.0.50 \
-            cudatoolkit==9.2 \
-            pytorch \
-            torchvision \
-            fastprogress \
-            pip \
-            git \
-            jupyter
-
-RUN conda install -n fastai -c conda-forge \
-            pyarrow==0.10 \
-            feather-format 
+            fastai==$FASTAI_VERSION \
+            fastprogress
 
 # pip installs
 RUN /opt/conda/envs/fastai/bin/pip install \
-            nvidia-ml-py3 \
-            dataclasses \
             pandas-summary==0.0.6
 
 #################################################################################################################
@@ -96,16 +94,17 @@ RUN /opt/conda/envs/fastai/bin/pip install \
 #################################################################################################################
 
 RUN conda install -n fastai \
-            scikit-learn \
-            bcolz
+            scikit-learn
+
+# pip installs
+RUN /opt/conda/envs/fastai/bin/pip install \
+            isoweek
 
 #################################################################################################################
 #           JUPYTER 
 # Notes
 # * multiple GPUs, you can point notebook servers to each device using CUDA_DEVICE_ORDER and CUDA_VISIBLE_DEVICES 
 #   (see https://github.com/MattKleinsmith/dockerfiles/blob/master/fastai/Dockerfile)
-# * notebook password is set to fastai below
-# * set the default working directory with c.NotebookApp.notebook_dir = 
 #################################################################################################################
 
 # Add a notebook profile.

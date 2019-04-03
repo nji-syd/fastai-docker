@@ -18,6 +18,7 @@ Edit the dockerfile to set the default working directory for Jupyter. Edit \<pat
 ```
 RUN echo "c.NotebookApp.notebook_dir = '/<path-to-directory>'" >> /root/.jupyter/jupyter_notebook_config.py
 ```
+When running a container with docker (version 2) use the --runtime=nvidia argument to utilize the GPU.
 
 ### Legacy Files
 
@@ -58,7 +59,7 @@ docker build -f fastai1.0.cuda9 -t fastai .
 ```
 ##### Run Image
 ```sh
-nvidia-docker run --rm -d --name fastai -p 8888:8888 -v /home:/home fastai
+nvidia-docker run --runtime=nvidia --rm -d --name fastai -p 8888:8888 -v /home:/home fastai
 ```
 
 ##### Attach with Command Line Access (if required)
